@@ -5,10 +5,10 @@ from pprint import pprint
 import math
 from fuzzywuzzy import fuzz
 import logging
+import time
 
-# look into async
 
-class Wikipedia(object):
+class WikipediaAPI(object):
 
     """sends queries to the Wikipedia API
     language options and stats can be found here: https://en.wikipedia.org/wiki/List_of_Wikipedias"""
@@ -22,22 +22,31 @@ class Wikipedia(object):
 
     def _send_query(self):
         """sends a query and saves response"""
+
         response = self.session.get(self.url, params=self.query, headers=self.headers)
         logging.debug(response)
+        if(not response.ok):
+            raise Exception(response)
         self.data = response.json()
+        try:
+            logging.warning(self.data['error'])
+            raise Exception('Check parameters; ' + str(self.data))
+        except KeyError:
+            pass
     
     def _next_search_results(self):
         """gets next set of results for query response"""
+
         current_results = self.data
         while('continue' in current_results):
             print('getting next page')
             _continue = current_results['continue']
             self.query['continue'] = _continue
             self._send_query
+            time.sleep(1)
             if(self.data == current_results):
                 print('reached end of results')
                 break
-            #pprint(new_results)
             for page, result in self.data['query']['pages'].items():
                 try:
                     current_results['query']['pages'][page].update(result)
@@ -46,7 +55,19 @@ class Wikipedia(object):
             self.data = current_results
 
     def search_nearby(self, lat, lon, limit, radiusmetres):
-        """query to get wiki pages near a coordinate"""
+        """query to get wiki pages near a coordinate
+        options for geosearch are found here: 
+        https://en.wikipedia.org/w/api.php?action=help&modules=query+geosearch"""
+
+        if(not isinstance(lat, float)):
+            raise Exception('Check parameters; latitude must be a float')
+        if(not isinstance(lon, float)):
+            raise Exception('Check parameters; longitude must be a float')
+        if((not isinstance(radiusmetres, int)) or (not 10 <= radiusmetres <= 10000)):
+            raise Exception('Check parameters; radiusmetres must be an int between 10 and 10000')
+        if((not isinstance(limit, int)) or (not 0 < limit <= 500)):
+            raise Exception('Check parameters; limit must be an int between 1 and 500')
+
         self.query = {
         "format": "json",
         "generator": "geosearch",
@@ -56,11 +77,20 @@ class Wikipedia(object):
         "action": "query",
         "prop": "coordinates|pageterms|pageimages"
         }
+        
         self._send_query()
         self._next_search_results()
     
     def search_string(self, search_string, limit=5):
-        """query to search wikipedia for pages containing search string."""
+        """query to search wikipedia for pages containing search string.
+        options for search found here: https://www.mediawiki.org/wiki/API:Search
+        and for query here: https://www.mediawiki.org/wiki/API:Query"""
+        
+        if(not isinstance(search_string, str)):
+            raise Exception('Check parameters; keyword must be a string')
+        if((not isinstance(limit, int)) or (not 0 < limit <= 500)):
+            raise Exception('Check parameters; limit must be an int between 1 and 500')
+
         self.query = {
             "format": "json",
             'generator': 'search',
@@ -75,22 +105,31 @@ class Wikipedia(object):
         self._send_query()
         self._next_search_results()
 
-    def parse_page(self, pagetitles=[], to_parse=['text']):
-        """query to parse a wiki page by page title.
-        options for what to parse can be found at https://www.mediawiki.org/wiki/API:Parsing_wikitext"""
+    """
+    def parse_page(self, pagetitle, to_parse=['text']):
+        #query to parse a wiki page by page title.
+        #options for what to parse can be found here:
+         #https://www.mediawiki.org/wiki/API:Parsing_wikitext
+
+        if(not isinstance(pagetitle, str)):
+            raise Exception('Check parameters; pagetitle must be a string')
+        if(not isinstance(to_parse, list)):
+            raise Exception('Check parameters; to_parse must be a list of strings to parse')
+
         self.query = {
             "format": "json",
             "action": "parse",
-            "page": '|'.join(pagetitles),
+            "page": '{}'.format(pagetitle),
             "prop": "{}".format('|'.join(to_parse)),
         }
         self._send_query()
+    """
 
     def return_data(self):
         """output response data"""
         return self.data
     
-class WikiCommons(Wikipedia):
+class WikiCommonsAPI(WikipediaAPI):
 
     """sends queries to the wiki commons api"""
 
@@ -98,9 +137,18 @@ class WikiCommons(Wikipedia):
         super().__init__(userinfo)
         self.url = "https://commons.wikimedia.org/w/api.php"
     
-    def search_nearby(self, lat, lon, radiusmetres=10000):
+    def search_nearby(self, lat, lon, radiusmetres):
         """get images near given coordinates from wikimedia commons.
-        options for image info are found here https://www.mediawiki.org/w/api.php?action=help&modules=query%2Bimageinfo"""
+        options for image info are found here:
+         https://www.mediawiki.org/w/api.php?action=help&modules=query%2Bimageinfo"""
+
+        if(not isinstance(lat, float)):
+            raise Exception('Check parameters; latitude must be a float')
+        if(not isinstance(lon, float)):
+            raise Exception('Check parameters; longitude must be a float')
+        if((not isinstance(radiusmetres, int)) or (not 10 <= radiusmetres <= 10000)):
+            raise Exception('Check parameters; radiusmetres must be an int between 10 and 10000')
+
         self.query = {
             'format': 'json',
             'action': 'query',
@@ -126,19 +174,22 @@ if __name__ == '__main__':
     wiki = Wikipedia("DaytripApp (marymcguire1718@gmail.com)")
 
     def run_search_nearby():
-        wiki.search_nearby(51.43295, -0.5118, 20, 1000)
-        pprint(wiki.return_data())
+        wiki.search_nearby(51.43295, -0.5114918947219849, 10, 10000)
+        return wiki.return_data()
     
     def run_parse_page():
-        wiki.parse_page(["Antrim Coast and Glens"], to_parse=['text', 'sections'])
-        print(wiki.return_data())
+        wiki.parse_page("Antrim Coast and Glens", to_parse=['text', 'sections'])
+        return wiki.return_data()
     
     def run_search_string():
         wiki.search_string('Staines Bridge', limit=5)
-        pprint(wiki.return_data())
+        return wiki.return_data()
 
     def run_commons_search_nearby():
         commons.search_nearby(51.43295, -0.5118)
-        print(commons.return_data())
+        return commons.return_data()
     
-    run_commons_search_nearby()
+    start = time.time()
+    pprint(run_search_string())
+    end = time.time()
+    print('time taken:', end-start)
