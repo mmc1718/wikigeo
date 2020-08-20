@@ -6,7 +6,7 @@ Examples:
 
 ## 1. Setting up wikiextractor
 
-from wikigeo.wikisearch import WikiExtractor
+from wikigeo import WikiExtractor
 
 wiki = WikiExtractor(languagecode, 'userdetails; see https://www.mediawiki.org/wiki/API:Etiquette#The_User-Agent_header')
 
@@ -33,7 +33,7 @@ Optional only select the best match on name/distance
 
 coords = [(lat, lon), (lat, lon) ...]
 
-from wikigeo.wikimultisearch import ConcurrentSearcher
+from wikigeo import ConcurrentSearcher
 
 wiki = ConcurrentSearcher(languagecode, userinfo)
 nearby = wiki.multi_nearby_pages(coordpairs, toget=['titles'], limit=4, radiusmetres=10000)
