@@ -7,9 +7,6 @@ from fuzzywuzzy import fuzz
 import math
 
 
-# sort out logging v print
-
-
 class WikiExtractor(object):
 
     """methods to search wikipedia and return specified information"""
@@ -23,10 +20,8 @@ class WikiExtractor(object):
 
         radiusmeters: the distance in metres to search, can be max 10000 (10km). default is 10000
         limit: max number of pages to return (default 4)
-        toget: list containing any of 'titles', 'labels', 'descriptions', 'coordinates', 'images' 
-        (default ['titles'])
 
-        returns list of dictionaries with requested info"""
+        returns list of dictionaries with title, label, description, coordinates, image"""
 
         titles = []
         labels = []
@@ -65,10 +60,13 @@ class WikiExtractor(object):
 
     def get_page_text(self, pagetitle, limit=False, translateto=False):
         """scrape the full text of a given page
-        returns a dictionary with pagetitle and text
-
+        
         pagetitle: exact title of page to scrape
-        limit: int, character limit of text returned"""
+        limit: int, character limit of text returned
+        translateto: language code for language that text should be translated into
+        
+        returns a dictionary with pagetitle and text
+        """
             
         wiki = WikiText(limit, self.language)
         result = wiki.scrape_page_text(pagetitle)
@@ -82,7 +80,10 @@ class WikiExtractor(object):
         radiusmetres: distance to search, max 10000 (10km)
         nametomatch: if set to a name then results are given a match rating against the name
         matchfilter: if set to an int then results are filtered for results that have a higher rated name match,
-        can be between 0 (no matching) and 100 (exact match only)"""
+        can be between 0 (no matching) and 100 (exact match only)
+        
+        returns list of dictionaries containing image data
+        [{'image': i, 'title': t, 'url': url, 'name match': x}, ...]"""
 
         commons = WikiCommonsAPI(self.user)
         if(matchfilter and (not nametomatch)):
