@@ -4,7 +4,9 @@ Python library for supplementing geographic data with point of interest data fro
 
 ## Installation
 
+```
 pip install wikigeo
+```
 
 ## Usage
 
