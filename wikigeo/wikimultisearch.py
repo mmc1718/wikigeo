@@ -18,10 +18,11 @@ class ConcurrentSearcher(object):
         """gets nearby pages from multiple sets of coordinates.
 
         coordpairs: a list of tuples containing lat lon pairs
+        limit: int, max number of pages to return
         returns 'titles', 'labels', 'descriptions', 'coordinates', 'images'
 
-        returns a list of dictionaries of arrays containing info in the order of the coords
-        {'coords': inputted coords, 'result': info}"""
+        returns a list of dictionaries containing info in the order of the coords
+        [{'coords': (lat, lon), 'result': [{result1}, {result2} ...]}, ...] """
 
         if(self.maxlimit):
             if(len(coordpairs) > 50):
@@ -45,8 +46,11 @@ class ConcurrentSearcher(object):
 
         titles: list of wiki page titles
         textlen: int representing character limit for text returned
+        translateto: string language code of language to translate text into e.g. 'en'
+
         returns a list of dictionaries of headers and text for each page
-        {'title': inputtedtitle, 'result': dictionaryresult}"""
+
+        [{'title': inputtedtitle, 'text': textresult}, ...]"""
 
         if(self.maxlimit):
             if(len(titles) > 50):
@@ -55,7 +59,6 @@ class ConcurrentSearcher(object):
             and https://phabricator.wikimedia.org/ for advice on api limits. 
             To bypass add maxlimit=False as a parameter for ConcurrentSearcher""")
         
-        #textlens = [textlen for title in titles]
         if(not isinstance(textlen, int)):
             raise Exception('invalid textlen argument; must be one of False or an integer')
         scraper = WikiText(textlen, self.language)
@@ -74,8 +77,12 @@ class ConcurrentSearcher(object):
 
         coordpairs: a list of tuples containing lat lon pairs
         namestomatch: a list of names to match with each lat lon pair
+        radiusmetres: an int max 10000, distance from coords to search
         matchfilter: an int representing min name match value for results with a name to match (between 0 and 100)
         
+        returns list of dictionary of results
+        [{'coords: latlon, 'result': [result1, result 2, ...]}, ...]
+
         Notes: inputs of coords and names must in the same order to match and must be same length
         (if names are missing use False as placeholder)"""
         
@@ -107,8 +114,19 @@ class ConcurrentSearcher(object):
         """gets suggested page match for each keyword and coordpair in searchparams
 
         searches: a list of tuples containing keyword, lat, lon
-        returns a list of dictionary/lists of dictionaries containing page title, description, label, image, distance, coords
-        and match rating"""
+        bestmatch: if 'name' will return the best (highest on scale 0-100) match based 
+                    on keyword matching page title
+                    if 'distance' will return the best (closest) match on distance
+                    if False will return all geolocated matches nearby
+        maxdistance: int, results must be less than the max distance in km of results from search coords 
+                    (default 30)
+        minnamematch: int, results must have a higher name match than minnamematch, between 0-100 
+                    (default 50)
+        
+        returns a list of dictionary/lists of dictionaries containing page title, 
+        description, label, image, distance, coords and match rating
+        
+        [{'keyword': input, 'result': [{result1}, {result2}, ...]}, ...]"""
 
         if(self.maxlimit):
             if(len(searches) > 50):
