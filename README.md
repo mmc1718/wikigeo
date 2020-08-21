@@ -24,6 +24,7 @@ pip install wikigeo
 
 ```python
 >>>nearbypages = wiki.get_nearby_pages(51.43181, -0.51066, limit=4, radiusmetres=10000)
+>>>
 >>>print(nearbypages)
 [{'title': 'River Colne, Hertfordshire', 'description': ['river in Hertfordshire, England'], 'coordinates': {'lat': 51.43305556, 'lon': -0.51527778}, 'label': ['River Colne'], 'image': 'https://upload.wikimedia.org/wikipedia/commons/8/8f/RiverColneStaines01.JPG'}]
 ```
@@ -32,6 +33,7 @@ pip install wikigeo
 
 ```python
 >>>nearbyimages = wiki.get_nearby_images(51.44069, -0.56165, nametomatch='Runnymede', matchfilter=40)
+>>>
 >>>print(nearbyimages)
 [{'image': 'https://upload.wikimedia.org/wikipedia/commons/8/80/Langham_Pond%2C_Runnymede_-_geograph.org.uk_-_276735.jpg', 'title': 'File:Langham Pond, Runnymede - geograph.org.uk - 276735.jpg', 'url': 'https://commons.wikimedia.org/wiki/File:Langham_Pond,_Runnymede_-_geograph.org.uk_-_276735.jpg', 'name match': 100}]
 ```
@@ -41,6 +43,7 @@ pip install wikigeo
 
 ```python
 >>>suggestedwiki = wiki.get_page_match("Runnymede", 51.44069, -0.56165, bestmatch=False, maxdistance=100)
+>>>
 >>>print(suggestedwiki)
 [{'title': 'Borough of Runnymede', 'description': ['local government district with borough status in Surrey, England'], 'label': ['Runnymede'], 'image': 'https://upload.wikimedia.org/wikipedia/commons/7/79/Runnymede_UK_locator_map.svg', 'lat': 51.395, 
 'lon': -0.541, 'distance': 5.284246482529435, 'name match': 62}, {'title': 'Runnymede', 'description': ['water-meadow alongside the River Thames in Surrey, England'], 'label': ['Runnymede'], 'image': 'https://upload.wikimedia.org/wikipedia/commons/5/55/RunnymedeMagnacartaisle.jpg', 'lat': 51.44444444, 'lon': -0.56527778, 'distance': 0.4878789100654987, 'name match': 100}] 
