@@ -166,32 +166,3 @@ class WikiCommonsAPI(WikipediaAPI):
         self._send_query()
         self._next_search_results()
 
-
-if __name__ == '__main__':
-
-    
-    from pprint import pprint
-
-    commons = WikiCommonsAPI("test test@example.com")
-    wiki = WikipediaAPI("test test@example.com")
-
-    def run_search_nearby():
-        wiki.search_nearby(51.43295, -0.5114918947219849, 10, 10000)
-        return wiki.return_data()
-    
-    def run_parse_page():
-        wiki.parse_page("Antrim Coast and Glens", to_parse=['text', 'sections'])
-        return wiki.return_data()
-    
-    def run_search_string():
-        wiki.search_string('Staines Bridge', limit=5)
-        return wiki.return_data()
-
-    def run_commons_search_nearby():
-        commons.search_nearby(45.78024, -34.91654, 1000)
-        return commons.return_data()
-    
-    start = time.time()
-    pprint(run_commons_search_nearby())
-    end = time.time()
-    print('time taken:', end-start)
