@@ -1,7 +1,7 @@
 import json
 import time
 from wikigeo.wikisource.wikiapi import WikipediaAPI, WikiCommonsAPI
-from wikigeo.wikisource.wikiscrape import WikiScraper
+from wikigeo.wikisource.wikitext import WikiText
 import logging
 from fuzzywuzzy import fuzz
 import math
@@ -18,7 +18,7 @@ class WikiExtractor(object):
         self.user = userinfo
         self.language = language
 
-    def get_nearby_pages(self, lat, lon, toget=['titles'], limit=4, radiusmetres=10000):
+    def get_nearby_pages(self, lat, lon, limit=4, radiusmetres=10000):
         """get requested info for all pages nearby given coordinates.
 
         radiusmeters: the distance in metres to search, can be max 10000 (10km). default is 10000
@@ -26,7 +26,7 @@ class WikiExtractor(object):
         toget: list containing any of 'titles', 'labels', 'descriptions', 'coordinates', 'images' 
         (default ['titles'])
 
-        returns dictionary of arrays for each requested info"""
+        returns list of dictionaries with requested info"""
 
         titles = []
         labels = []
@@ -37,33 +37,31 @@ class WikiExtractor(object):
         wiki.search_nearby(lat, lon, limit, radiusmetres)
         response = wiki.return_data()
         for page, result in response['query']['pages'].items():
-            if('titles' in toget):
-                titles.append(result['title'])
-            if('labels' in toget):
-                try:
-                    labels.append(result['terms']['label'])
-                except:
-                    labels.append(None)
-            if('descriptions' in toget):
-                try:
-                    descriptions.append(result['terms']['description'])
-                except:
-                    descriptions.append(None)
-            if('coordinates' in toget):
-                coordinates.append({'lat': result['coordinates'][0]['lat'], 'lon': result['coordinates'][0]['lon']})
-            if('images' in toget):
-                try:
-                    thumbnail = result['thumbnail']['source']
-                    image = thumbnail.split('/')
-                    image.pop(-1)
-                    image.remove('thumb')
-                    imageurl = '/'.join(image)
-                    images.append(imageurl)
-                except:
-                    images.append(None)
-        data = {'titles': titles, 'labels': labels, 'descriptions': descriptions, 'coordinates': coordinates, 'images': images}
-        output = {request: data[request] for request in toget}
-        return output
+            titles.append(result['title'])
+            try:
+                labels.append(result['terms']['label'])
+            except:
+                labels.append(None)
+            try:
+                descriptions.append(result['terms']['description'])
+            except:
+                descriptions.append(None)
+            coordinates.append({'lat': result['coordinates'][0]['lat'], 'lon': result['coordinates'][0]['lon']})
+            try:
+                thumbnail = result['thumbnail']['source']
+                image = thumbnail.split('/')
+                image.pop(-1)
+                image.remove('thumb')
+                imageurl = '/'.join(image)
+                images.append(imageurl)
+            except:
+                images.append(None)
+            output = [
+                {'title': title, 'description': description, 'coordinates': latlon, 'label': label, 'image': image}
+                 for title, description, latlon, label, image
+                  in zip(titles, descriptions, coordinates, labels, images)]
+            return output
+        
 
     def get_page_text(self, pagetitle, limit=False, translateto=False):
         """scrape the full text of a given page
@@ -72,8 +70,8 @@ class WikiExtractor(object):
         pagetitle: exact title of page to scrape
         limit: int, character limit of text returned"""
             
-        wiki = WikiScraper(self.language)
-        result = wiki.scrape_page_text(pagetitle, limit)
+        wiki = WikiText(limit, self.language)
+        result = wiki.scrape_page_text(pagetitle)
         if(translateto):
             result['text'] = wiki.translate_text([result['text']], translateto)
         return result
@@ -195,34 +193,3 @@ class WikiExtractor(object):
         else:
             return []
 
-
-if __name__ == '__main__':
-
-    
-    from pprint import pprint
-
-    wiki = WikiExtractor(language='en', userinfo="test")
-    
-
-    def run_get_nearby_images():
-        titles = wiki.get_nearby_images(55.95527, -3.18108, nametomatch='Calton Hill', matchfilter=40)
-        print(titles)
-    
-    def run_get_page_match():
-        suggested = wiki.get_page_match("Staines Moor", 51.43260, -0.51074, bestmatch=False, maxdistance=100)
-        print(suggested)
-
-    def run_get_page_text():
-        paras = wiki.get_page_text('Staines Bridge', limit=500, translateto='de')
-        print(paras)
-    
-    def run_get_nearby_pages():
-        data = wiki.get_nearby_pages(54.6687, -7.6823, toget=['titles', 'coordinates', 'images'])
-        print(data)
-
-
-    start = time.time()
-    run_get_page_text()
-    end = time.time()
-    print('time taken:', end-start)
-    
