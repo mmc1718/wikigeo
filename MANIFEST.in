@@ -1,4 +1,2 @@
-include *.log
 include *.txt
 include LICENSE
-recursive-include __pycache__ *.pyc
