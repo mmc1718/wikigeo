@@ -16,7 +16,7 @@ wiki = WikiExtractor(languagecode, 'userdetails; see https://www.mediawiki.org/w
 
 ### 2. Getting all pages within a given distance (up to a max of 10km) from a given latitude longitude point:
 
-nearbypages = wiki.get_nearby_pages(latitude, longitude, toget=['titles', 'descriptions'], limit=4, radiusmetres=10000)
+nearbypages = wiki.get_nearby_pages(latitude, longitude, limit=4, radiusmetres=10000)
 
 returns dictionary of arrays for each requested info
 
@@ -40,7 +40,7 @@ coords = [(lat, lon), (lat, lon) ...]
 from wikigeo import ConcurrentSearcher
 
 wiki = ConcurrentSearcher(languagecode, userinfo)
-nearby = wiki.multi_nearby_pages(coordpairs, toget=['titles'], limit=4, radiusmetres=10000)
+nearby = wiki.multi_nearby_pages(coordpairs, limit=4, radiusmetres=10000)
 
 returns a list of dictionaries containing results
 
