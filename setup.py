@@ -1,13 +1,18 @@
-from setuptools import setup
+import setuptools
 
-setup(
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
+setuptools.setup(
     name='wikigeo',
     version='0.0.1',
-    description='Supplementing geographic data with point of interests from wikipedia',
-    package_dir={'': 'wikigeo'},
+    description='Supplementing geographic data with data on points of interest from wikipedia',
+    long_description=long_description,
+    packages=setuptools.find_packages(),
     author='Mary McGuire',
     author_email='marymcguire1718@gmail.com',
-    packages=find_packages(),
+    install_requires=["requests_html",
+    "googletrans", "fuzzywuzzy", "python-Levenshtein-wheels"],
     classifiers=[
         "Programming Language :: Python :: 3.8",
         "Operating System :: OS Independent"
