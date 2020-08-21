@@ -1,18 +1,21 @@
-# wikigeo
+# Wikigeo
 
 Python library for supplementing geographic data with wiki data
 
 # Installation
 
-...
+pip install wikigeo
 
-# Examples:
+# Usage
 
 ### 1. Setting up wikiextractor
 
 from wikigeo import WikiExtractor
 
-wiki = WikiExtractor(languagecode, 'userdetails; see https://www.mediawiki.org/wiki/API:Etiquette#The_User-Agent_header')
+wiki = WikiExtractor('languagecode', 'userdetails')
+
+for info on userdetails see: https://www.mediawiki.org/wiki/API:Etiquette#The_User-Agent_header
+for language code options: https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
 
 ### 2. Getting all pages within a given distance (up to a max of 10km) from a given latitude longitude point:
 
