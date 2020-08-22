@@ -8,6 +8,7 @@ setuptools.setup(
     version='0.0.1',
     description='Getting point of interest data by geographic coordinates from Wikipedia',
     long_description=long_description,
+    long_description_content_type="text/markdown",
     packages=setuptools.find_packages(),
     author='Mary McGuire',
     author_email='marymcguire1718@gmail.com',
