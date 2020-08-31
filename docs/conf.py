@@ -24,6 +24,8 @@ author = 'Mary McGuire'
 # The full version, including alpha/beta/rc tags
 release = '1.2.01a'
 
+master_doc = 'index'
+
 
 # -- General configuration ---------------------------------------------------
 
