@@ -13,10 +13,10 @@ Given pairs of longitude and latitude coordinates you can use Wikigeo to search 
 Modules
 ==================
 
-.. automodule:: wikisearch
+.. automodule:: wikigeo.wikisearch
    :members:
    
-.. automodule:: wikimultisearch
+.. automodule:: wikigeo.wikimultisearch
    :members:
 
 
