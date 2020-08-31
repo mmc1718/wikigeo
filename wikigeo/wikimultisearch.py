@@ -6,23 +6,39 @@ import logging
 
 class ConcurrentSearcher(object):
 
-    """runs search methods with multiple sets of parameters concurrently
-    keep max searches low so as not to request more than 50 pages in a minute (conservative)"""
+    """
+    
+    Runs search methods with multiple sets of parameters concurrently.  
+    Keep max searches low so as not to request more than 50 pages in a minute (conservative estimate)
+    
+    """
 
     def __init__(self, language, userinfo, maxlimit=True):
+        """
+
+        for language code options: https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
+        for info on user details see: https://www.mediawiki.org/wiki/API:Etiquette#The_User-Agent_header
+
+        """
         self.wiki = WikiExtractor(language, userinfo)
         self.maxlimit = maxlimit
         self.language = language
     
     def multi_nearby_pages(self, coordpairs, limit=4, radiusmetres=10000):
-        """gets nearby pages from multiple sets of coordinates.
+        """
+        
+        gets nearby pages from multiple sets of coordinates.
 
         coordpairs: a list of tuples containing lat lon pairs
-        limit: int, max number of pages to return
-        returns 'titles', 'labels', 'descriptions', 'coordinates', 'images'
 
-        returns a list of dictionaries containing info in the order of the coords
-        [{'coords': (lat, lon), 'result': [{result1}, {result2} ...]}, ...] """
+        limit: int, max number of pages to return
+
+        returns a list of results. Each result is a dictionary with a 'result' key containing a list of dictionaries (one page per dictionary), with 'title', 'label', 'description', 'coordinates', 'image'.
+        Results are outputted in the same order of the given coords.
+
+        [{'coords': (lat, lon), 'result': [{result1}, {result2} ...]}, ...]
+        
+        """
 
         if(self.maxlimit):
             if(len(coordpairs) > 50):
@@ -42,15 +58,22 @@ class ConcurrentSearcher(object):
         
 
     def multi_page_text(self, titles, textlen, translateto):
-        """gets text from multiple pages
+        """
+        
+        Gets text from multiple pages by title.
 
         titles: list of wiki page titles
-        textlen: int representing character limit for text returned
-        translateto: string language code of language to translate text into e.g. 'en'
+
+        textlen: optional, int representing character limit for text returned.
+
+        translateto: string language code of language to translate text into e.g. 'en'. 
+        See https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes for options.
 
         returns a list of dictionaries of headers and text for each page
 
-        [{'title': inputtedtitle, 'text': textresult}, ...]"""
+        [{'title': inputtedtitle, 'text': textresult}, ...]
+        
+        """
 
         if(self.maxlimit):
             if(len(titles) > 50):
@@ -73,18 +96,25 @@ class ConcurrentSearcher(object):
         return output
 
     def multi_nearby_images(self, coordpairs, namestomatch=False, radiusmetres=10000, matchfilter=False):
-        """gets images nearby for each coord pair
+        """
+        
+        Gets images nearby for each coord pair.
 
         coordpairs: a list of tuples containing lat lon pairs
+
         namestomatch: a list of names to match with each lat lon pair
-        radiusmetres: an int max 10000, distance from coords to search
-        matchfilter: an int representing min name match value for results with a name to match (between 0 and 100)
+
+        radiusmetres: an int max 10000, distance from coords to search (default 10000)
+
+        matchfilter: either False or an int representing min name match value for results with a name to match (between 0 and 100)
         
         returns list of dictionary of results
         [{'coords: latlon, 'result': [result1, result 2, ...]}, ...]
 
         Notes: inputs of coords and names must in the same order to match and must be same length
-        (if names are missing use False as placeholder)"""
+        (if names are missing use False as placeholder)
+        
+        """
         
         if(self.maxlimit):
             if(len(coordpairs) > 50):
@@ -110,23 +140,32 @@ class ConcurrentSearcher(object):
         output = [{'coords': coordpair, 'result': result} for coordpair, result in zip(coordpairs, results)]
         return output
 
-    def multi_page_match(self, searches, bestmatch=False, maxdistance=30, minnamematch=50):
-        """gets suggested page match for each keyword and coordpair in searchparams
+    def multi_page_match(self, searches, bestmatch=False, maxdistance=30, minnamematch=0):
+        """
+        
+        Gets suggested page match for each keyword and coordpair in searchparams.
 
-        searches: a list of tuples containing keyword, lat, lon
-        bestmatch: if 'name' will return the best (highest on scale 0-100) match based 
-                    on keyword matching page title
-                    if 'distance' will return the best (closest) match on distance
-                    if False will return all geolocated matches nearby
-        maxdistance: int, results must be less than the max distance in km of results from search coords 
-                    (default 30)
-        minnamematch: int, results must have a higher name match than minnamematch, between 0-100 
-                    (default 50)
+        searches: a list of tuples containing keyword (string), lat (float), lon (float)
+
+        bestmatch: 
+
+        bestmatch='name' will return the best (highest on scale 0-100) match based 
+        on keyword matching page title 
+
+        bestmatch='distance' will return the best (closest) match on distance
+
+        bestmatch=False will return all geolocated matches nearby
+
+        maxdistance: int, results must be less than the max distance in km of results from search coords (default 30)
+        
+        minnamematch: int, results must have a higher name match than minnamematch, between 0-100 (default 50)
         
         returns a list of dictionary/lists of dictionaries containing page title, 
         description, label, image, distance, coords and match rating
         
-        [{'keyword': input, 'result': [{result1}, {result2}, ...]}, ...]"""
+        [{'keyword': input, 'result': [{result1}, {result2}, ...]}, ...]
+
+        """
 
         if(self.maxlimit):
             if(len(searches) > 50):
