@@ -114,21 +114,26 @@ class WikiExtractor(object):
             raise Exception('nametomatch must be set to a name if using a matchfilter')
         commons.search_nearby(lat, lon, radiusmetres)
         response = commons.return_data()
+        imagedata = []
         try:
             images = response['query']['pages']
-            imagedata = []
             for key, value in images.items():
-                image = value['imageinfo'][0]['url']
-                title = value['title']
-                url = value['imageinfo'][0]['descriptionurl']
+                image = value.get('imageinfo', {})[0].get('url', '')
+                title = value.get('title', '')
+                url = value.get('imageinfo', {})[0].get('descriptionurl', '')
                 imagedata.append({'image': image, 'title': title, 'url': url})
         except KeyError:
-            imagedata.append(None)
-        if(nametomatch):
+            logging.debug(response)
+            imagedata.append({})
+        logging.debug(imagedata)
+        if(nametomatch and any(imagedata)):
+            print('nametomatch is ' + str(nametomatch))
+            print('imagedata is ' + str(imagedata))
+            logging.debug('matching on name...')
             for image in imagedata:
                 image['name match'] = fuzz.partial_ratio(nametomatch, image['title'])
             imagedata.sort(key=lambda x: int(x['name match']), reverse=True)
-        if(matchfilter):
+        if(matchfilter and any(imagedata)):
             imagedata = [image for image in imagedata if image['name match'] > matchfilter]
         return imagedata
 
