@@ -180,6 +180,7 @@ class WikiExtractor(object):
             logging.debug('results: ' + str(len(search_results['query']['pages'])))
         except KeyError:
             logging.warning('cannot find data from ' + str(search_results))
+            return {}
         for page, info in search_results['query']['pages'].items():
             name = info['title']
             try:
@@ -226,5 +227,5 @@ class WikiExtractor(object):
             else:
                 return results
         else:
-            return []
+            return {}
 
