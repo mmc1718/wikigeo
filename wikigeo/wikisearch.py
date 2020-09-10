@@ -76,7 +76,10 @@ class WikiExtractor(object):
         
         limit: int, character limit of text returned. If set to False then the full text is returned. (default is False).
         
-        translateto: language code for language that text should be translated into.
+        translateto: 
+        language code for language that text should be translated into.
+        If no translation required, set to False. (default is False)
+        See https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes for options.
         
         returns a dictionary with pagetitle and text.
 
@@ -127,11 +130,11 @@ class WikiExtractor(object):
             imagedata.append({})
         logging.debug(imagedata)
         if(nametomatch and any(imagedata)):
-            print('nametomatch is ' + str(nametomatch))
-            print('imagedata is ' + str(imagedata))
+            #print('nametomatch is ' + str(nametomatch))
+            #print('imagedata is ' + str(imagedata))
             logging.debug('matching on name...')
             for image in imagedata:
-                image['name match'] = fuzz.partial_ratio(nametomatch, image['title'])
+                image['name match'] = fuzz.partial_ratio(nametomatch.lower(), image['title'])
             imagedata.sort(key=lambda x: int(x['name match']), reverse=True)
         if(matchfilter and any(imagedata)):
             imagedata = [image for image in imagedata if image['name match'] > matchfilter]
@@ -179,7 +182,7 @@ class WikiExtractor(object):
 
         data = []
         wiki = WikipediaAPI(self.user, self.language)
-        wiki.search_string(keyword, limit=5)
+        wiki.search_string(keyword.lower(), limit=5)
         search_results = wiki.return_data()
         try:
             logging.debug('results: ' + str(len(search_results['query']['pages'])))
