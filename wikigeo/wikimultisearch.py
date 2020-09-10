@@ -57,7 +57,7 @@ class ConcurrentSearcher(object):
         return output
         
 
-    def multi_page_text(self, titles, textlen, translateto):
+    def multi_page_text(self, titles, textlen, translateto=False):
         """
         
         Gets text from multiple pages by title.
@@ -67,6 +67,7 @@ class ConcurrentSearcher(object):
         textlen: optional, int representing character limit for text returned.
 
         translateto: string language code of language to translate text into e.g. 'en'. 
+        If not translation required, set to False (default is False)
         See https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes for options.
 
         returns a list of dictionaries of headers and text for each page
