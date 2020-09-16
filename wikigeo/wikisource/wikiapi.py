@@ -2,7 +2,7 @@ import requests_html as r
 from requests_html import HTML
 import json
 import math
-from fuzzywuzzy import fuzz
+import re
 import logging
 import time
 
@@ -16,19 +16,21 @@ class WikipediaAPI(object):
         self.headers = {"User-agent": userinfo}
         self.session = r.HTMLSession()
         self.url = "https://{}.wikipedia.org/w/api.php".format(language)
-        self.data = None
+        self.result = {}
+        self.data = {}
         self.query = None
 
     def _send_query(self):
         """sends a query and saves response"""
 
+        logging.debug('query: ' + str(self.query))
         response = self.session.get(self.url, params=self.query, headers=self.headers)
         logging.debug(response)
         if(not response.ok):
             raise Exception(response)
-        self.data = response.json()
+        self.result = response.json()
         try:
-            logging.warning(self.data['error'])
+            logging.warning(self.result['error'])
             raise Exception('Check parameters; ' + str(self.data))
         except KeyError:
             pass
@@ -36,22 +38,35 @@ class WikipediaAPI(object):
     def _next_search_results(self):
         """gets next set of results for query response"""
 
-        current_results = self.data
-        while('continue' in current_results):
+        # saving result to data
+        self.data = self.result.copy()
+        while('continue' in self.result):
+            # copying result
+            page = self.result.copy()
             logging.debug('getting next page')
-            _continue = current_results['continue']
-            self.query['continue'] = _continue
-            self._send_query
+            logging.debug(self.result['continue'])
+            # adding continue parameters to query
+            for contparam, value in self.result['continue'].items():
+                self.query[contparam] = value
+            #_continue = current_results['continue']
+            #self.query['continue'] = _continue
+            self._send_query()
             time.sleep(1)
-            if(self.data == current_results):
+            logging.debug('previous page: ' + str(page))
+            logging.debug('new page: ' + str(self.result))
+            # checking if new results are the same as the previous
+            if(self.result == page):
                 logging.debug('reached end of results')
                 break
-            for page, result in self.data['query']['pages'].items():
+            # updating data
+            for article, result in self.result['query']['pages'].items():
                 try:
-                    current_results['query']['pages'][page].update(result)
+                    # updating the old results
+                    self.data['query']['pages'][article].update(result)
                 except:
-                    logging.warning(str(page) + 'missing from new results')
-            self.data = current_results
+                    logging.debug(str(page) + 'missing from new results')
+            # setting the data to equal the newly updated results
+            # self.data = current_results
 
     def search_nearby(self, lat, lon, limit, radiusmetres):
         """query to get wiki pages near a coordinate
@@ -99,7 +114,7 @@ class WikipediaAPI(object):
             'prop': 'coordinates|pageterms|pageimages',
             'piprop': 'original|name',
             'coprop': 'type',
-            'coprimary': 'all'
+            'coprimary': 'primary'
         }
         self._send_query()
         self._next_search_results()
@@ -166,3 +181,12 @@ class WikiCommonsAPI(WikipediaAPI):
         self._send_query()
         self._next_search_results()
 
+if __name__ == '__main__':
+
+    from pprint import pprint
+
+    coords = [58.076026212, 1.730324014]
+
+    wiki = WikiCommonsAPI('')
+    result = wiki.search_nearby(coords[0], coords[1], 10000)
+    pprint(result)
