@@ -9,8 +9,7 @@ def test_get_nearby_images():
     wiki = WikiExtractor(language='en', userinfo="test")
     images = wiki.get_nearby_images(55.95527, -3.18108, nametomatch='Calton Hill', matchfilter=40)
     for result in images:
-        print('hello')
-        assert isinstance(result, dict) and isinstance(result['image'], str)
+        assert isinstance(result, dict) and isinstance(result['image'], str) and isinstance(result['lat'], float) and isinstance(result['lon'], float)
 
 def test_get_nearby_images_none():
     wiki = WikiExtractor(language='en', userinfo="test")
