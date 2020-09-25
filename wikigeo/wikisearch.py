@@ -124,7 +124,12 @@ class WikiExtractor(object):
                 image = value.get('imageinfo', {})[0].get('url', '')
                 title = value.get('title', '')
                 url = value.get('imageinfo', {})[0].get('descriptionurl', '')
-                imagedata.append({'image': image, 'title': title, 'url': url})
+                lat = value['coordinates'][0]['lat']
+                lon = value['coordinates'][0]['lon']
+                imagelicense = value.get('imageinfo', {})[0].get('extmetadata', {}).get('License', {}).get('value', '')
+                author = value.get('imageinfo', {})[0].get('extmetadata', {}).get('Attribution', {}).get('value', '')
+                description = value.get('imageinfo', {})[0].get('extmetadata', {}).get('ImageDescription', {}).get('value', '')
+                imagedata.append({'image': image, 'title': title, 'url': url, 'lat': lat, 'lon': lon, 'author': author, 'license': imagelicense, 'description': description})
         except KeyError:
             logging.debug(response)
             imagedata.append({})
@@ -134,7 +139,7 @@ class WikiExtractor(object):
             #print('imagedata is ' + str(imagedata))
             logging.debug('matching on name...')
             for image in imagedata:
-                image['name match'] = fuzz.partial_ratio(nametomatch.lower(), image['title'])
+                image['name match'] = fuzz.partial_ratio(nametomatch.lower(), image['title'].lower())
             imagedata.sort(key=lambda x: int(x['name match']), reverse=True)
         if(matchfilter and any(imagedata)):
             imagedata = [image for image in imagedata if image['name match'] > matchfilter]
@@ -182,8 +187,9 @@ class WikiExtractor(object):
 
         data = []
         wiki = WikipediaAPI(self.user, self.language)
-        wiki.search_string(keyword.lower(), limit=5)
+        wiki.search_string(keyword.lower(), limit=3)
         search_results = wiki.return_data()
+        logging.debug(search_results)
         try:
             logging.debug('results: ' + str(len(search_results['query']['pages'])))
         except KeyError:
@@ -191,11 +197,13 @@ class WikiExtractor(object):
             return {}
         for page, info in search_results['query']['pages'].items():
             name = info['title']
+            logging.debug('found ' + name)
             try:
                 lat = info['coordinates'][0]['lat']
                 lon = info['coordinates'][0]['lon']
             except KeyError:
                 logging.debug('cannot find coords for ' + name)
+                logging.debug(info)
                 continue
             try:
                 description = info['terms']['description']
@@ -214,7 +222,7 @@ class WikiExtractor(object):
                 image = None
             result = {'title': name, 'description': description, 'label': label, 'image': image, 'lat': lat, 'lon': lon}
             result['distance'] = self._get_km_distance(searchlat, searchlon, lat, lon)
-            result['name match'] = fuzz.ratio(name, keyword)
+            result['name match'] = fuzz.ratio(name.lower(), keyword.lower())
             #result['summary'] = self.getPageText([name])['text'][0:200]
             data.append(result)
         logging.debug('final data length: ' + str(len(data)))
