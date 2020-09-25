@@ -7,6 +7,7 @@ import logging
 import time
 
 
+
 class WikipediaAPI(object):
 
     """sends queries to the Wikipedia API
@@ -65,6 +66,9 @@ class WikipediaAPI(object):
                     self.data['query']['pages'][article].update(result)
                 except:
                     logging.debug(str(page) + 'missing from new results')
+            if 'batchcomplete' in self.result:
+                logging.debug('reached end of batch')
+                break
             # setting the data to equal the newly updated results
             # self.data = current_results
 
@@ -109,7 +113,8 @@ class WikipediaAPI(object):
             "format": "json",
             'generator': 'search',
             "gsrsearch": search_string.replace(' ', '+'),
-            'gsrlimit': '{}'.format(limit),
+            'gsrlimit': f'{limit}',
+            'colimit': f'{limit}',
             "action": "query",
             'prop': 'coordinates|pageterms|pageimages',
             'piprop': 'original|name',
@@ -169,14 +174,13 @@ class WikiCommonsAPI(WikipediaAPI):
             'generator': 'geosearch',
             'ggscoord': "{}|{}".format(lat, lon),
             'ggslimit': 5,
-            'prop': 'imageinfo|imagelabels',
+            'prop': 'imageinfo|imagelabels|coordinates',
             'iilimit': 1,
-            'iiprop': 'url',
+            'iiprop': 'url|extmetadata',
             'iiurlwidth': '250',
             'iiurlheight': '250',
             'ggsradius': "{}".format(radiusmetres),
             'ggsnamespace': '6',
-            'ggsprimary': 'all'
         }
         self._send_query()
         self._next_search_results()
@@ -185,8 +189,8 @@ if __name__ == '__main__':
 
     from pprint import pprint
 
-    coords = [58.076026212, 1.730324014]
+    coords = [51.477106480966924, -0.05733484162192326]
 
     wiki = WikiCommonsAPI('')
-    result = wiki.search_nearby(coords[0], coords[1], 10000)
-    pprint(result)
+    wiki.search_nearby(coords[0], coords[1], 10000)
+    pprint(wiki.return_data())
