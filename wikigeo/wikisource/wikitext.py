@@ -1,6 +1,5 @@
 from requests_html import HTML, HTMLSession
 import time
-from googletrans import Translator
 import logging
 
 class WikiText(object):
@@ -12,7 +11,6 @@ class WikiText(object):
         self.wikidomain = 'https://{}.wikipedia.org/wiki/'.format(language)
         self.data = {}
         self.language = language
-        self.translator = Translator()
         self.limit = limit
         if(not isinstance(self.limit, int)):
             raise Exception('invalid limit argument; must be False or int')
@@ -35,22 +33,5 @@ class WikiText(object):
             result = {'title': pagetitle, 'text': pagetext[0:self.limit]}
         else:
             result = {'title': pagetitle, 'text': pagetext}
-        return result
-
-    def translate_text(self, textlist, translateto):
-        """translates text into the specified language. 
-        e.g. if using the french (fr) wikipedia, can translate results into english by setting
-         translateto='en'
-         textlist: a list of strings to be translated. each string must be under 10000 chars
-         returns a list of strings of translated text"""
-        
-        for extract in textlist:
-            if(len(extract) > 10000):
-                raise Exception('Texts over 10000 chars are not reliably translated. Please use limit parameter.')
-        translations = self.translator.translate(textlist, dest=translateto, src=self.language)
-        if(self.limit):
-            result = [translation.text[0:self.limit] for translation in translations]
-        else:
-            result = [translation.text for translation in translations]
         return result
 

@@ -22,24 +22,14 @@ def test_nearby_pages():
         print(result)
         assert isinstance(result['coords'], tuple) and isinstance(result['result'][0]['title'], str)
 
-def test_page_text_no_translate():
+def test_page_text():
     searcher = ConcurrentSearcher('en', "testing (marymcguire1718@gmail.com)")
     titles = ['Staines-upon-Thames', 'Edinburgh', 'Killeter', 'Northern Ireland', 'Staines Moor', 
     'Epping Forest', 'France', 'Greater_London', 'Paris', 'Scotland', 'England', 'Manchester', 'Hyde Park', 
     'Birmingham', 'Surrey', 'Kent', 'South_East_England', 'Berkshire', 'City of London', 'Central_London']
-    result = searcher.multi_page_text(titles, textlen=50, translateto=False)
+    result = searcher.multi_page_text(titles, textlen=50)
     for page in result:
         assert isinstance(page['text'][0], str) and len(page['text']) == 50
-
-def test_page_text_translate():
-    searcher = ConcurrentSearcher('en', "testing (marymcguire1718@gmail.com)")
-    titles = ['Staines-upon-Thames', 'Edinburgh', 'Berlin', 'Northern Ireland', 'Staines Moor', 
-    'Epping Forest', 'France', 'Greater_London', 'Paris', 'Scotland', 'England', 'Manchester', 'Hyde Park', 
-    'Birmingham', 'Surrey', 'Kent', 'South_East_England', 'Berkshire', 'City of London', 'Central_London']
-
-    result = searcher.multi_page_text(titles, textlen=50, translateto='fr')
-    for page in result:
-        assert isinstance(page['text'], str) and len(page['text']) <= 50
 
 def test_nearby_images():
     searcher = ConcurrentSearcher('en', "testing (marymcguire1718@gmail.com)")

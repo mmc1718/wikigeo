@@ -57,7 +57,7 @@ class ConcurrentSearcher(object):
         return output
         
 
-    def multi_page_text(self, titles, textlen, translateto=False):
+    def multi_page_text(self, titles, textlen):
         """
         
         Gets text from multiple pages by title.
@@ -65,10 +65,6 @@ class ConcurrentSearcher(object):
         titles: list of wiki page titles
 
         textlen: optional, int representing character limit for text returned.
-
-        translateto: string language code of language to translate text into e.g. 'en'. 
-        If not translation required, set to False (default is False)
-        See https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes for options.
 
         returns a list of dictionaries of headers and text for each page
 
@@ -88,12 +84,7 @@ class ConcurrentSearcher(object):
         scraper = WikiText(textlen, self.language)
         with concurrent.futures.ThreadPoolExecutor() as executor:
             results = executor.map(scraper.scrape_page_text, titles)
-        if(translateto):
-            data = [result for result in results]
-            translated = scraper.translate_text([record['text'] for record in data], translateto)
-            output = [{'title': record['title'], 'text': translation} for record, translation in zip(data, translated)]
-        else:
-            output = [result for result in results]
+        output = [result for result in results]
         return output
 
     def multi_nearby_images(self, coordpairs, namestomatch=False, radiusmetres=10000, matchfilter=False):

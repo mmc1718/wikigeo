@@ -67,7 +67,7 @@ class WikiExtractor(object):
             return output
         
 
-    def get_page_text(self, pagetitle, limit=False, translateto=False):
+    def get_page_text(self, pagetitle, limit=False):
         """
         
         Retrieve the full text of a given page by page title.
@@ -76,21 +76,12 @@ class WikiExtractor(object):
         
         limit: int, character limit of text returned. If set to False then the full text is returned. (default is False).
         
-        translateto: 
-        language code for language that text should be translated into.
-        If no translation required, set to False. (default is False)
-        See https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes for options.
-        
         returns a dictionary with pagetitle and text.
-
-        Note: if requesting translated text, limit should be a max of 10000
 
         """
             
         wiki = WikiText(limit, self.language)
         result = wiki.scrape_page_text(pagetitle)
-        if(translateto):
-            result['text'] = wiki.translate_text([result['text']], translateto)
         return result
 
     def get_nearby_images(self, lat, lon, radiusmetres=10000, nametomatch=False, matchfilter=False):
