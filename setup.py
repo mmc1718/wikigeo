@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name='wikigeo',
-    version='1.2.0a1',
+    version='1.3.0',
     description='Getting point of interest data by geographic coordinates from Wikipedia',
     long_description=long_description,
     long_description_content_type="text/markdown",

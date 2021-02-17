@@ -24,7 +24,7 @@ def test_get_page_match():
     for page in suggested:
         assert isinstance(page['title'], str)
 
-def test_get_page_text():
+def test_get_page_text_translate():
     wiki = WikiExtractor(language='en', userinfo="test")
     page = wiki.get_page_text('Staines Bridge', limit=500, translateto='de')
     assert isinstance(page['text'][0], str) and len(page['text']) == 1
@@ -34,3 +34,8 @@ def test_get_nearby_pages():
     data = wiki.get_nearby_pages(54.6687, -7.6823)
     for page in data:
         assert isinstance(page['title'], str) and isinstance(page['coordinates']['lat'], float)
+
+def test_get_page_text():
+    wiki = WikiExtractor(language='en', userinfo="test")
+    page = wiki.get_page_text('Staines Bridge', limit=500)
+    assert isinstance(page['text'][0], str) and len(page['text']) == 500
