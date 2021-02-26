@@ -13,7 +13,7 @@ setuptools.setup(
     author='Mary McGuire',
     author_email='marymcguire1718@gmail.com',
     install_requires=["requests_html",
-    "googletrans", "fuzzywuzzy", "python-Levenshtein-wheels"],
+    "fuzzywuzzy", "python-Levenshtein-wheels"],
     extras_require={"pytest": "pytest==6.0.1", "tox": "tox==3.19.0"},
     classifiers=[
         "Programming Language :: Python :: 3.8",
