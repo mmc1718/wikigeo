@@ -34,3 +34,10 @@ def test_get_page_text():
     wiki = WikiExtractor(language='en', userinfo="test")
     page = wiki.get_page_text('Staines Bridge', limit=500)
     assert isinstance(page['text'][0], str) and len(page['text']) == 500
+
+def test_get_page_match_case_two():
+    wiki = WikiExtractor(language='en', userinfo="test")
+    suggested = wiki.get_page_match('Staines', 51.43399588542416, -0.5114918947219849, bestmatch=False, maxdistance=30)
+    for page in suggested:
+        print(page) # debug
+        assert isinstance(page['title'], str)
