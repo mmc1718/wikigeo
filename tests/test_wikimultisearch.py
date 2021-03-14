@@ -43,8 +43,9 @@ def test_nearby_images():
 
 def test_page_match():
     searcher = ConcurrentSearcher('en', "testing (marymcguire1718@gmail.com)")
-    searches = [("Arthur's Seat", 55.94631, -3.16552), ('Staines', 51.43399588542416, -0.5114918947219849)]
-    matches = searcher.multi_page_match(searches, bestmatch=True, minnamematch=0)
+    searches = [('Staines', 51.43399588542416, -0.5114918947219849), ("Arthur's Seat", 55.94631, -3.16552)]
+    matches = searcher.multi_page_match(searches, maxdistance=50, bestmatch=True, minnamematch=0)
     for page in matches:
         print(page)
         assert isinstance(page['result'][0]['title'], str) and isinstance(page['result'][0]['lat'], float)
+    assert False

@@ -175,5 +175,6 @@ class ConcurrentSearcher(object):
         logging.debug(keywords)
         with concurrent.futures.ThreadPoolExecutor() as executor:
             results = executor.map(self.wiki.get_page_match, keywords, lats, lons, bestmatch, maxdistance, minnamematch)
+            print(list(results))
         output = [{'keyword': keyword, 'result': result} for keyword, result in zip(keywords, results)]
         return output
