@@ -1,5 +1,5 @@
 from wikigeo.wikisearch import WikiExtractor
-from wikigeo.wikisource.wikitext import WikiText
+from wikigeo.wikisource.wikitext import scrape_page_text
 import concurrent.futures
 import time
 import logging

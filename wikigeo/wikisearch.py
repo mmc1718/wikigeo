@@ -1,8 +1,8 @@
 import logging
 import math
 from fuzzywuzzy import fuzz
-from wikigeo.wikisource.wikiapi import WikipediaAPI, WikiCommonsAPI
-from wikigeo.wikisource.wikitext import WikiText
+from wikigeo.wikisource.wikiapi import WikipediaAPI
+from wikigeo.wikisource.wikitext import scrape_page_text
 
 
 
