@@ -1,9 +1,9 @@
 import logging
 import math
+from pprint import pprint
 from fuzzywuzzy import fuzz
-from wikigeo.wikisource.wikiapi import WikipediaAPI
+from wikigeo.wikisource.wikiapi import WikipediaAPI, query_nearby, query_by_string, query_commons_nearby
 from wikigeo.wikisource.wikitext import scrape_page_text
-
 
 
 class WikiExtractor:
@@ -14,12 +14,13 @@ class WikiExtractor:
 
     """
 
-    def __init__(self, language, userinfo):
+    def __init__(self, language: str, userinfo: str):
         self.user = userinfo
         self.language = language
-        self.api = WikipediaAPI(userinfo, language)
+        self.api = WikipediaAPI("test")
+        self.commonsapi = WikipediaAPI("test", commons=True)
 
-    def get_nearby_pages(self, lat: float, lon: float, limit: int = 4, radiusmetres: int = 10000):
+    def get_nearby_pages(self, lat: float, lon: float, limit: int = 4, radiusmeters: int = 10000):
         """
 
         Get details for all pages within a given radius of given coordinates.
@@ -38,9 +39,9 @@ class WikiExtractor:
         descriptions = []
         coordinates = []
         images = []
-        self.api.search_nearby(lat, lon, limit, radiusmetres)
-        response = self.api.return_data()
-        for _, result in response["query"]["pages"].items():
+        query = query_nearby(lat, lon, limit, radiusmeters)
+        response = self.api.get_data(query)
+        for _, result in response.items():
             titles.append(result["title"])
             try:
                 labels.append(result["terms"]["label"])
@@ -93,12 +94,11 @@ class WikiExtractor:
 
         """
 
-        wiki = WikiText(limit, self.language)
-        result = wiki.scrape_page_text(pagetitle)
+        result = scrape_page_text(pagetitle, limit, self.language)
         return result
 
     def get_nearby_images(
-        self, lat, lon, radiusmetres=10000, nametomatch=False, matchfilter=False
+        self, lat, lon, radiusmeters=10000, nametomatch=False, matchfilter=False
     ):
         """
 
@@ -120,53 +120,48 @@ class WikiExtractor:
 
         """
 
-        commons = WikiCommonsAPI(self.user)
         if matchfilter and (not nametomatch):
             raise Exception("nametomatch must be set to a name if using a matchfilter")
-        commons.search_nearby(lat, lon, radiusmetres)
-        response = commons.return_data()
+        query = query_commons_nearby(lat, lon, radiusmeters)
+        response = self.commonsapi.get_data(query)
         imagedata = []
-        try:
-            images = response["query"]["pages"]
-            for _, value in images.items():
-                image = value.get("imageinfo", {})[0].get("url", "")
-                title = value.get("title", "")
-                url = value.get("imageinfo", {})[0].get("descriptionurl", "")
-                lat = value["coordinates"][0]["lat"]
-                lon = value["coordinates"][0]["lon"]
-                imagelicense = (
-                    value.get("imageinfo", {})[0]
-                    .get("extmetadata", {})
-                    .get("License", {})
-                    .get("value", "")
-                )
-                author = (
-                    value.get("imageinfo", {})[0]
-                    .get("extmetadata", {})
-                    .get("Attribution", {})
-                    .get("value", "")
-                )
-                description = (
-                    value.get("imageinfo", {})[0]
-                    .get("extmetadata", {})
-                    .get("ImageDescription", {})
-                    .get("value", "")
-                )
-                imagedata.append(
-                    {
-                        "image": image,
-                        "title": title,
-                        "url": url,
-                        "lat": lat,
-                        "lon": lon,
-                        "author": author,
-                        "license": imagelicense,
-                        "description": description,
-                    }
-                )
-        except KeyError:
-            logging.debug(response)
-            imagedata.append({})
+        images = response
+        for _, value in images.items():
+            image = value.get("imageinfo", {})[0].get("url", "")
+            title = value.get("title", "")
+            url = value.get("imageinfo", {})[0].get("descriptionurl", "")
+            lat = value["coordinates"][0]["lat"]
+            lon = value["coordinates"][0]["lon"]
+            imagelicense = (
+                value.get("imageinfo", {})[0]
+                .get("extmetadata", {})
+                .get("License", {})
+                .get("value", "")
+            )
+            author = (
+                value.get("imageinfo", {})[0]
+                .get("extmetadata", {})
+                .get("Attribution", {})
+                .get("value", "")
+            )
+            description = (
+                value.get("imageinfo", {})[0]
+                .get("extmetadata", {})
+                .get("ImageDescription", {})
+                .get("value", "")
+            )
+            imagedata.append(
+                {
+                    "image": image,
+                    "title": title,
+                    "url": url,
+                    "lat": lat,
+                    "lon": lon,
+                    "author": author,
+                    "license": imagelicense,
+                    "description": description,
+                }
+            )
         logging.debug(imagedata)
         if nametomatch and any(imagedata):
             # print('nametomatch is ' + str(nametomatch))
@@ -233,8 +228,8 @@ class WikiExtractor:
         """
 
         data = []
-        self.api.search_string(keyword.lower(), limit=3)
-        search_results = self.api.return_data()
+        query = query_by_string(keyword.lower(), limit=3)
+        search_results = self.api.get_data(query)
         logging.debug(search_results)
         try:
             logging.debug("results: %s", str(len(search_results["query"]["pages"])))

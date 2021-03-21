@@ -48,4 +48,3 @@ def test_page_match():
     for page in matches:
         print(page)
         assert isinstance(page['result'][0]['title'], str) and isinstance(page['result'][0]['lat'], float)
-    assert False

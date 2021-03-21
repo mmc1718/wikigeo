@@ -81,9 +81,9 @@ class ConcurrentSearcher(object):
         
         if(not isinstance(textlen, int)):
             raise Exception('invalid textlen argument; must be one of False or an integer')
-        scraper = WikiText(textlen, self.language)
+        textlens = [textlen for title in titles]
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            results = executor.map(scraper.scrape_page_text, titles)
+            results = executor.map(scrape_page_text, titles, textlens)
         output = [result for result in results]
         return output
 

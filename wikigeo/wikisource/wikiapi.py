@@ -24,7 +24,6 @@ class WikipediaAPI:
 
     def _send_query(self) -> dict:
         """sends query and returns response"""
-
         logging.debug("sending query: %s", self.query)
         response = self.session.get(self.url, params=self.query, headers=self.headers)
         logging.debug(response)
@@ -68,12 +67,14 @@ class WikipediaAPI:
         all_results = self._next_search_results(first_page)
         combined_results = {}
         for result in all_results:
-            for article, data in result["query"]["pages"].items():
-                # updating the old results
-                if article not in combined_results.keys():
-                    combined_results[article] = data
-                else:
-                    combined_results[article].update(data)
+            articles = result.get('query')
+            if articles:
+                for article, data in articles['pages'].items():
+                    # updating the old results
+                    if article not in combined_results.keys():
+                        combined_results[article] = data
+                    else:
+                        combined_results[article].update(data)
         return combined_results
 
 
