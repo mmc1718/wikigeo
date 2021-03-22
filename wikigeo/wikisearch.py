@@ -135,8 +135,10 @@ class WikiExtractor:
         query = query_commons_nearby(lat, lon, radiusmeters)
         response = self.commonsapi.get_data(query)
         imagedata = []
+        i = 0
         for _, image in response.items():
             image_result = {
+                "index": i
                 "image": "",
                 "title": image.get("title", ""),
                 "url": "",
@@ -163,7 +165,7 @@ class WikiExtractor:
                     image_result["description"] = metadata.get(
                         "ImageDescription", {}
                     ).get("value", "")
-
+            i += 1
             imagedata.append(image_result)
 
         logging.debug("got image data as %s", imagedata)
