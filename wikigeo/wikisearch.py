@@ -2,25 +2,44 @@ import logging
 import math
 from pprint import pprint
 from fuzzywuzzy import fuzz
-from wikigeo.wikisource.wikiapi import WikipediaAPI, query_nearby, query_by_string, query_commons_nearby
+from wikigeo.wikisource.wikiapi import (
+    WikipediaAPI,
+    query_nearby,
+    query_by_string,
+    query_commons_nearby,
+)
 from wikigeo.wikisource.wikitext import scrape_page_text
 
 
-class WikiExtractor:
+def _get_km_distance(lat1, lon1, lat2, lon2):
+    """converts decimal distance into kms"""
 
+    lat_a = float(lat1) * math.pi / 180
+    lng_a = float(lon1) * math.pi / 180
+    lat_b = float(lat2) * math.pi / 180
+    lng_b = float(lon2) * math.pi / 180
+    distance = 6378 * math.acos(
+        math.cos(lat_a) * math.cos(lat_b) * math.cos(lng_b - lng_a)
+        + math.sin(lat_a) * math.sin(lat_b)
+    )
+    return distance
+
+
+class WikiExtractor:
     """
 
     Search wikipedia and return specified information.
 
     """
-
     def __init__(self, language: str, userinfo: str):
         self.user = userinfo
         self.language = language
         self.api = WikipediaAPI("test")
         self.commonsapi = WikipediaAPI("test", commons=True)
 
-    def get_nearby_pages(self, lat: float, lon: float, limit: int = 4, radiusmeters: int = 10000):
+    def get_nearby_pages(
+        self, lat: float, lon: float, limit: int = 4, radiusmeters: int = 10000
+    ):
         """
 
         Get details for all pages within a given radius of given coordinates.
@@ -34,53 +53,40 @@ class WikiExtractor:
 
         """
 
-        titles = []
-        labels = []
-        descriptions = []
-        coordinates = []
-        images = []
+        pages = []
         query = query_nearby(lat, lon, limit, radiusmeters)
         response = self.api.get_data(query)
         for _, result in response.items():
-            titles.append(result["title"])
-            try:
-                labels.append(result["terms"]["label"])
-            except KeyError:
-                labels.append(None)
-            try:
-                descriptions.append(result["terms"]["description"])
-            except KeyError:
-                descriptions.append(None)
-            coordinates.append(
-                {
+            page = {
+                "title": result["title"],
+                "description": None,
+                "coordinates": {
                     "lat": result["coordinates"][0]["lat"],
                     "lon": result["coordinates"][0]["lon"],
-                }
-            )
-            try:
-                thumbnail = result["thumbnail"]["source"]
+                },
+                "label": None,
+                "image": None,
+            }
+
+            terms = result.get("terms")
+            if terms is not None:
+                page["label"] = terms.get("label")
+                page["description"] = terms.get("description")
+
+            thumbnail = result.get("thumbnail")
+            if thumbnail is not None:
+                thumbnail = thumbnail["source"]
                 image = thumbnail.split("/")
                 image.pop(-1)
                 image.remove("thumb")
                 imageurl = "/".join(image)
-                images.append(imageurl)
-            except KeyError:
-                images.append(None)
-            output = [
-                {
-                    "title": title,
-                    "description": description,
-                    "coordinates": latlon,
-                    "label": label,
-                    "image": image,
-                }
-                for title, description, latlon, label, image in zip(
-                    titles, descriptions, coordinates, labels, images
-                )
-            ]
-            return output
+                page["image"] = imageurl
 
-    def get_page_text(self, pagetitle, limit=False):
+            pages.append(page)
+
+        return pages
+
+    def get_page_text(self, pagetitle: str, limit: bool=False):
         """
 
         Retrieve the full text of a given page by page title.
@@ -93,7 +99,6 @@ class WikiExtractor:
         returns a dictionary with pagetitle and text.
 
         """
-
         result = scrape_page_text(pagetitle, limit, self.language)
         return result
 
@@ -119,77 +124,58 @@ class WikiExtractor:
         Note: if using matchfilter, nametomatch must be set to a string
 
         """
-
         if matchfilter and (not nametomatch):
-            raise Exception("nametomatch must be set to a name if using a matchfilter")
+            raise ValueError("nametomatch must be set to a name if using a matchfilter")
         query = query_commons_nearby(lat, lon, radiusmeters)
         response = self.commonsapi.get_data(query)
         imagedata = []
-        images = response
-        for _, value in images.items():
-            image = value.get("imageinfo", {})[0].get("url", "")
-            title = value.get("title", "")
-            url = value.get("imageinfo", {})[0].get("descriptionurl", "")
-            lat = value["coordinates"][0]["lat"]
-            lon = value["coordinates"][0]["lon"]
-            imagelicense = (
-                value.get("imageinfo", {})[0]
-                .get("extmetadata", {})
-                .get("License", {})
-                .get("value", "")
-            )
-            author = (
-                value.get("imageinfo", {})[0]
-                .get("extmetadata", {})
-                .get("Attribution", {})
-                .get("value", "")
-            )
-            description = (
-                value.get("imageinfo", {})[0]
-                .get("extmetadata", {})
-                .get("ImageDescription", {})
-                .get("value", "")
-            )
-            imagedata.append(
-                {
-                    "image": image,
-                    "title": title,
-                    "url": url,
-                    "lat": lat,
-                    "lon": lon,
-                    "author": author,
-                    "license": imagelicense,
-                    "description": description,
+        for _, image in response.items():
+            image_result = {
+                    "image": "",
+                    "title": image.get("title", ""),
+                    "url": "",
+                    "lat": image["coordinates"][0]["lat"],
+                    "lon": image["coordinates"][0]["lon"],
+                    "author": "",
+                    "license": "",
+                    "description": "",
                 }
-            )
-        logging.debug(imagedata)
+
+            image_info = image.get("imageinfo")
+            if image_info is not None:
+                image_url = image_info[0].get("url", "")
+                url = image_info[0].get("descriptionurl", "")
+                image_result["image"] = image_url
+                image_result["url"] = url
+                metadata = image_info[0].get("extmetadata", {})
+                if metadata is not None:
+                    imagelicense = metadata.get("License", {}).get("value", "")
+                    author = metadata.get("Attribution", {}).get("value", "")
+                    description = metadata.get("ImageDescription", {}).get("value", "")
+                    image_result["license"] = imagelicense
+                    image_result["author"] = author
+                    image_result["description"] = description
+
+            imagedata.append(image_result)
+
+        logging.debug("got image data as %s", imagedata)
+
         if nametomatch and any(imagedata):
-            # print('nametomatch is ' + str(nametomatch))
-            # print('imagedata is ' + str(imagedata))
+            # sorting results by name match ratio
             logging.debug("matching on name...")
             for image in imagedata:
                 image["name match"] = fuzz.partial_ratio(
                     nametomatch.lower(), image["title"].lower()
                 )
             imagedata.sort(key=lambda x: int(x["name match"]), reverse=True)
-        if matchfilter and any(imagedata):
-            imagedata = [
-                image for image in imagedata if image["name match"] > matchfilter
-            ]
+
+            if matchfilter and any(imagedata):
+                # filtering out matches below filter
+                imagedata = [
+                    image for image in imagedata if image["name match"] > matchfilter
+                ]
+
         return imagedata
-
-    def _get_km_distance(self, lat1, lon1, lat2, lon2):
-        """converts decimal distance into kms"""
-
-        lat_a = float(lat1) * math.pi / 180
-        lng_a = float(lon1) * math.pi / 180
-        lat_b = float(lat2) * math.pi / 180
-        lng_b = float(lon2) * math.pi / 180
-        distance = 6378 * math.acos(
-            math.cos(lat_a) * math.cos(lat_b) * math.cos(lng_b - lng_a)
-            + math.sin(lat_a) * math.sin(lat_b)
-        )
-        return distance
 
     def get_page_match(
         self, keyword, searchlat, searchlon, bestmatch, maxdistance=30, minnamematch=0
@@ -226,17 +212,16 @@ class WikiExtractor:
         out entities may not match.
 
         """
-
         data = []
         query = query_by_string(keyword.lower(), limit=3)
         search_results = self.api.get_data(query)
         logging.debug(search_results)
         try:
-            logging.debug("results: %s", str(len(search_results["query"]["pages"])))
+            logging.debug("results: %s", str(len(search_results)))
         except:
             logging.warning("cannot find data from %s", str(search_results))
             return {}
-        for _, info in search_results["query"]["pages"].items():
+        for _, info in search_results.items():
             name = info["title"]
             logging.debug("found %s", name)
             try:
@@ -269,7 +254,7 @@ class WikiExtractor:
                 "lat": lat,
                 "lon": lon,
             }
-            result["distance"] = self._get_km_distance(searchlat, searchlon, lat, lon)
+            result["distance"] = _get_km_distance(searchlat, searchlon, lat, lon)
             result["name match"] = fuzz.ratio(name.lower(), keyword.lower())
             # result['summary'] = self.getPageText([name])['text'][0:200]
             data.append(result)

@@ -98,7 +98,7 @@ class TestQueries(unittest.TestCase):
     def test_query_nearby(self):
         """test query to search near given point"""
         query = query_nearby(54.6687, -7.6823, 4, 1000)
-        api = WikipediaAPI(USER_DETAILS)
+        api = WikipediaAPI(USER_DETAILS, "en")
         result = api.get_data(query)
         assert len(result.keys()) > 1
 

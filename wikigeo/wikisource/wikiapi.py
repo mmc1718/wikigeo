@@ -12,7 +12,7 @@ class WikipediaAPI:
     https://en.wikipedia.org/wiki/List_of_Wikipedias"""
 
     def __init__(
-        self, userinfo: str, commons: bool = False, language: str = "en"
+        self, userinfo: str, language: str = "en", commons: bool = False
     ):
         self.headers = {"User-agent": userinfo}
         self.session = r.HTMLSession()
@@ -55,6 +55,7 @@ class WikipediaAPI:
                 logging.debug("got same results")
                 break
             result = next_result
+
         if "batchcomplete" in result.keys():
             logging.debug("batchcomplete")
         else:
@@ -64,17 +65,20 @@ class WikipediaAPI:
         """return all data from search"""
         self.query = query
         first_page = self._send_query()
-        all_results = self._next_search_results(first_page)
+        all_pages = self._next_search_results(first_page)
         combined_results = {}
-        for result in all_results:
-            articles = result.get('query')
-            if articles:
-                for article, data in articles['pages'].items():
-                    # updating the old results
-                    if article not in combined_results.keys():
-                        combined_results[article] = data
-                    else:
-                        combined_results[article].update(data)
+
+        for page in all_pages:
+            result = page.get('query')
+            if result is None:
+                continue
+            for article, data in result['pages'].items():
+                # updating the old results
+                if article not in combined_results.keys():
+                    combined_results[article] = data
+                else:
+                    combined_results[article].update(data)
+
         return combined_results
 
 
