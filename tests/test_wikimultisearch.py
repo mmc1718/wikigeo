@@ -1,4 +1,3 @@
-import pytest
 from wikigeo import ConcurrentSearcher
 
 def test_nearby_pages():
@@ -38,13 +37,13 @@ def test_nearby_images():
     imagesdata = searcher.multi_nearby_images(coords, names, matchfilter=40)
     for images in imagesdata:
         print(images)
-        for result in images['result']:
+        for _, result in images['images'].items():
             assert isinstance(result, dict) and isinstance(result['image'], str)
 
 def test_page_match():
     searcher = ConcurrentSearcher('en', "testing (marymcguire1718@gmail.com)")
     searches = [('Staines', 51.43399588542416, -0.5114918947219849), ("Arthur's Seat", 55.94631, -3.16552)]
-    matches = searcher.multi_page_match(searches, maxdistance=50, bestmatch=True, minnamematch=0)
+    matches = searcher.multi_page_match(searches, maxdistance=50, bestmatch=True, name_match_greater=0)
     for page in matches:
         print(page)
         assert isinstance(page['result'][0]['title'], str) and isinstance(page['result'][0]['lat'], float)

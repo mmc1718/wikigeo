@@ -129,10 +129,10 @@ class ConcurrentSearcher(object):
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             results = executor.map(self.wiki.get_nearby_images, lats, lons, radiusmetres, namestomatch, matchfilters)
-        output = [{'coords': coordpair, 'result': result} for coordpair, result in zip(coordpairs, results)]
+        output = [{'coords': coordpair, 'images': result} for coordpair, result in zip(coordpairs, results)]
         return output
 
-    def multi_page_match(self, searches, bestmatch=False, maxdistance=30, minnamematch=0):
+    def multi_page_match(self, searches, bestmatch=False, maxdistance=30, name_match_greater=0):
         """
         
         Gets suggested page match for each keyword and coordpair in searchparams.
@@ -150,7 +150,7 @@ class ConcurrentSearcher(object):
 
         maxdistance: int, results must be less than the max distance in km of results from search coords (default 30)
         
-        minnamematch: int, results must have a higher name match than minnamematch, between 0-100 (default 50)
+        name_match_greater: int, results must have a higher name match than name_match_greater, between 0-100 (default 50)
         
         returns a list of dictionary/lists of dictionaries containing page title, 
         description, label, image, distance, coords and match rating
@@ -171,10 +171,10 @@ class ConcurrentSearcher(object):
         lons = [search[2] for search in searches]
         bestmatch = [bestmatch for search in searches]
         maxdistance = [maxdistance for search in searches]
-        minnamematch = [minnamematch for search in searches]
+        name_match_greater = [name_match_greater for search in searches]
         logging.debug(keywords)
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            results = executor.map(self.wiki.get_page_match, keywords, lats, lons, bestmatch, maxdistance, minnamematch)
+            results = executor.map(self.wiki.get_page_match, keywords, lats, lons, bestmatch, maxdistance, name_match_greater)
             print(list(results))
         output = [{'keyword': keyword, 'result': result} for keyword, result in zip(keywords, results)]
         return output

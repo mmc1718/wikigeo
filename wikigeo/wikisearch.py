@@ -1,6 +1,6 @@
+"""Processing data from Wikipedia APIs"""
 import logging
 import math
-from pprint import pprint
 from fuzzywuzzy import fuzz
 from wikigeo.wikisource.wikiapi import (
     WikipediaAPI,
@@ -11,7 +11,7 @@ from wikigeo.wikisource.wikiapi import (
 from wikigeo.wikisource.wikitext import scrape_page_text
 
 
-def _get_km_distance(lat1, lon1, lat2, lon2):
+def _get_km_distance(lat1, lon1, lat2, lon2) -> float:
     """converts decimal distance into kms"""
 
     lat_a = float(lat1) * math.pi / 180
@@ -31,6 +31,7 @@ class WikiExtractor:
     Search wikipedia and return specified information.
 
     """
+
     def __init__(self, language: str, userinfo: str):
         self.user = userinfo
         self.language = language
@@ -39,7 +40,7 @@ class WikiExtractor:
 
     def get_nearby_pages(
         self, lat: float, lon: float, limit: int = 4, radiusmeters: int = 10000
-    ):
+    ) -> list:
         """
 
         Get details for all pages within a given radius of given coordinates.
@@ -86,7 +87,7 @@ class WikiExtractor:
 
         return pages
 
-    def get_page_text(self, pagetitle: str, limit: bool=False):
+    def get_page_text(self, pagetitle: str, limit: bool = False) -> dict:
         """
 
         Retrieve the full text of a given page by page title.
@@ -103,8 +104,13 @@ class WikiExtractor:
         return result
 
     def get_nearby_images(
-        self, lat, lon, radiusmeters=10000, nametomatch=False, matchfilter=False
-    ):
+        self,
+        lat: float,
+        lon: float,
+        radiusmeters=10000,
+        nametomatch=False,
+        matchfilter=False,
+    ) -> dict:
         """
 
         Gets all images nearby given coordinates from Wikimedia Commons.
@@ -131,30 +137,32 @@ class WikiExtractor:
         imagedata = []
         for _, image in response.items():
             image_result = {
-                    "image": "",
-                    "title": image.get("title", ""),
-                    "url": "",
-                    "lat": image["coordinates"][0]["lat"],
-                    "lon": image["coordinates"][0]["lon"],
-                    "author": "",
-                    "license": "",
-                    "description": "",
-                }
+                "image": "",
+                "title": image.get("title", ""),
+                "url": "",
+                "lat": image["coordinates"][0]["lat"],
+                "lon": image["coordinates"][0]["lon"],
+                "author": "",
+                "license": "",
+                "description": "",
+            }
 
             image_info = image.get("imageinfo")
             if image_info is not None:
-                image_url = image_info[0].get("url", "")
-                url = image_info[0].get("descriptionurl", "")
-                image_result["image"] = image_url
-                image_result["url"] = url
+                image_result["image"] = image_info[0].get("url", "")
+                image_result["url"] = image_info[0].get("descriptionurl", "")
+
                 metadata = image_info[0].get("extmetadata", {})
                 if metadata is not None:
-                    imagelicense = metadata.get("License", {}).get("value", "")
-                    author = metadata.get("Attribution", {}).get("value", "")
-                    description = metadata.get("ImageDescription", {}).get("value", "")
-                    image_result["license"] = imagelicense
-                    image_result["author"] = author
-                    image_result["description"] = description
+                    image_result["license"] = metadata.get("License", {}).get(
+                        "value", ""
+                    )
+                    image_result["author"] = metadata.get("Attribution", {}).get(
+                        "value", ""
+                    )
+                    image_result["description"] = metadata.get(
+                        "ImageDescription", {}
+                    ).get("value", "")
 
             imagedata.append(image_result)
 
@@ -174,12 +182,18 @@ class WikiExtractor:
                 imagedata = [
                     image for image in imagedata if image["name match"] > matchfilter
                 ]
-
-        return imagedata
+        image_results = {i: image_result for i in range(len(imagedata)) for image_result in imagedata}
+        return image_results
 
     def get_page_match(
-        self, keyword, searchlat, searchlon, bestmatch, maxdistance=30, minnamematch=0
-    ):
+        self,
+        keyword: str,
+        searchlat: float,
+        searchlon: float,
+        bestmatch: bool = False,
+        maxdistance=30,
+        name_match_greater=0,
+    ) -> dict:
         """
 
         Searches for all geolocated wiki pages containing given keyword.
@@ -198,11 +212,11 @@ class WikiExtractor:
         in km of results from search coords
                     (default 30)
 
-        minnamematch: int, results must have a higher name match than
-        minnamematch, between 0-100
+        name_match_greater: int, results must have a higher name match than
+        name_match_greater, between 0-100
                     (default 50)
 
-        returns a (list of) dictionaries containing page title, description,
+        returns a dictionary of page matches containing page title, description,
         label, image, distance, coords
         and match rating
 
@@ -215,72 +229,59 @@ class WikiExtractor:
         data = []
         query = query_by_string(keyword.lower(), limit=3)
         search_results = self.api.get_data(query)
-        logging.debug(search_results)
-        try:
-            logging.debug("results: %s", str(len(search_results)))
-        except:
-            logging.warning("cannot find data from %s", str(search_results))
-            return {}
+
         for _, info in search_results.items():
-            name = info["title"]
-            logging.debug("found %s", name)
-            try:
-                lat = info["coordinates"][0]["lat"]
-                lon = info["coordinates"][0]["lon"]
-            except:
-                logging.debug("cannot find coords for %s", name)
-                logging.debug(info)
-                continue
-            try:
-                description = info["terms"]["description"]
-            except:
-                logging.debug("cannot find description for %s", name)
-                description = None
-            try:
-                label = info["terms"]["label"]
-            except:
-                logging.debug("cannot find label for %s", name)
-                label = None
-            try:
-                image = info["original"]["source"]
-            except:
-                logging.debug("cannot find image for %s", name)
-                image = None
             result = {
-                "title": name,
-                "description": description,
-                "label": label,
-                "image": image,
-                "lat": lat,
-                "lon": lon,
+                "title": info["title"],
+                "description": None,
+                "label": None,
+                "image": None,
+                "lat": None,
+                "lon": None,
+                "distance": None,
+                "name match": None,
             }
-            result["distance"] = _get_km_distance(searchlat, searchlon, lat, lon)
-            result["name match"] = fuzz.ratio(name.lower(), keyword.lower())
-            # result['summary'] = self.getPageText([name])['text'][0:200]
+            logging.debug("found %s", result["title"])
+            coordinates = info.get("coordinates")
+            if coordinates is None:
+                logging.debug("cannot find coords for %s", result["title"])
+                logging.debug("full result: %s", info)
+                continue
+
+            result["lat"] = coordinates[0]["lat"]
+            result["lon"] = coordinates[0]["lon"]
+
+            terms = info.get("terms")
+            if terms is not None:
+                result["description"] = terms["description"]
+                result["label"] = terms["label"]
+
+            result["image"] = info.get("original", {}).get("source")
+            result["distance"] = _get_km_distance(
+                searchlat, searchlon, result["lat"], result["lon"]
+            )
+            result["name match"] = fuzz.ratio(result["title"].lower(), keyword.lower())
             data.append(result)
+
         logging.debug("final data length: %s", str(len(data)))
         logging.debug("results with coords saved from wiki search: %s", str(len(data)))
         # filtering for relevant results
-        # results = [place for place in data if ((place['distance'] < 10 and
-        # place['name match'] > 50) or (place['name match'] > 65 and
-        # place['distance'] < 30) or (place['distance'] < 5))]
         results = [
             place
             for place in data
             if (
                 (place["distance"] < maxdistance)
-                and (place["name match"] > minnamematch)
+                and (place["name match"] > name_match_greater)
             )
         ]
-        if results:
-            # getting best match if requested
+        if any(results):
+            # getting top match if requested
             if bestmatch == "name":
                 results.sort(key=lambda result: int(result["name match"]), reverse=True)
                 logging.debug("wikis: %s", str(results))
-                return results[0]
+                results = results[0]
             if bestmatch == "distance":
                 results.sort(key=(lambda result: abs(result["distance"])))
                 logging.debug("wikis: %s", str(results))
-                return results[0]
-            return results
-        return {}
+                results = results[0]
+        return {"page_matches": results}
