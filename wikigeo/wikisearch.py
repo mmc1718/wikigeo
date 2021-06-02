@@ -184,7 +184,9 @@ class WikiExtractor:
                 imagedata = [
                     image for image in imagedata if image["name match"] > matchfilter
                 ]
-        image_results = {i: image_result for i in range(len(imagedata)) for image_result in imagedata}
+        image_results = {
+            i: image_result for i in range(len(imagedata)) for image_result in imagedata
+        }
         return image_results
 
     def get_page_match(
