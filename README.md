@@ -6,6 +6,8 @@ Given pairs of longitude and latitude coordinates you can use Wikigeo to search 
 
 ## Installation
 
+Using pip
+
 ```
 pip install wikigeo
 ```
