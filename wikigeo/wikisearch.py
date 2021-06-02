@@ -138,7 +138,7 @@ class WikiExtractor:
         i = 0
         for _, image in response.items():
             image_result = {
-                "index": i
+                "index": i,
                 "image": "",
                 "title": image.get("title", ""),
                 "url": "",
