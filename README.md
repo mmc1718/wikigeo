@@ -38,10 +38,32 @@ pip install wikigeo
 ### 3. Getting all images from Wikimedia Commons within a given radius (up to a max of 10km) of a given latitude longitude point:
 
 ```python
->>>nearbyimages = wiki.get_nearby_images(51.44069, -0.56165, nametomatch='Runnymede', matchfilter=40)
+>>>nearbyimages = wiki.get_nearby_images(51.44069, -0.56165, nametomatch='Runnymede', matchfilter=95)
 >>>
->>>print(nearbyimages)
-[{'image': 'https://upload.wikimedia.org/wikipedia/commons/8/80/Langham_Pond%2C_Runnymede_-_geograph.org.uk_-_276735.jpg', 'title': 'File:Langham Pond, Runnymede - geograph.org.uk - 276735.jpg', 'url': 'https://commons.wikimedia.org/wiki/File:Langham_Pond,_Runnymede_-_geograph.org.uk_-_276735.jpg', 'name match': 100}]
+>>>pprint(nearbyimages)
+{0: {'author': '<i>Walk along the Thames from Runnymede to Old Windsor '
+               '(27)</i> by\xa0Basher Eyre',
+     'description': 'Walk along the Thames from Runnymede to Old Windsor '
+                    '(27)\xa0<a '
+                    'href="//commons.wikimedia.org/wiki/File:Walk_along_the_Thames_from_Runnymede_to_Old_Windsor_(27)_-_geograph.org.uk_-_2542021.jpg#ooui-php-4" '
+                    'title="Edit this at Structured Data on Commons"><img '
+                    'alt="Edit this at Structured Data on Commons" '
+                    'src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/OOjs_UI_icon_edit-ltr-progressive.svg/10px-OOjs_UI_icon_edit-ltr-progressive.svg.png" '
+                    'decoding="async" width="10" height="10" '
+                    'style="vertical-align: text-top" '
+                    'srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/OOjs_UI_icon_edit-ltr-progressive.svg/15px-OOjs_UI_icon_edit-ltr-progressive.svg.png '
+                    '1.5x, '
+                    'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/OOjs_UI_icon_edit-ltr-progressive.svg/20px-OOjs_UI_icon_edit-ltr-progressive.svg.png '
+                    '2x" data-file-width="20" data-file-height="20"></a>',
+     'image': 'https://upload.wikimedia.org/wikipedia/commons/3/3d/Walk_along_the_Thames_from_Runnymede_to_Old_Windsor_%2827%29_-_geograph.org.uk_-_2542021.jpg',
+     'index': 4,
+     'lat': 51.44317148,
+     'license': 'cc-by-sa-2.0',
+     'lon': -0.55893293,
+     'name match': 100,
+     'title': 'File:Walk along the Thames from Runnymede to Old Windsor (27) - '
+              'geograph.org.uk - 2542021.jpg',
+     'url': 'https://commons.wikimedia.org/wiki/File:Walk_along_the_Thames_from_Runnymede_to_Old_Windsor_(27)_-_geograph.org.uk_-_2542021.jpg'}}
 ```
 
 
